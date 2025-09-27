@@ -38,6 +38,7 @@ export class FlashSaleOrderEventHandler implements OnModuleInit {
     let status: OrderStatus = "SUCCESS";
     let message: string = "";
     try {
+      order.status = status;
       await this.ordersService.createOrder(order);
       await this.flashsaleCache.storeFlashSaleBuyer(order.customerId);
     } catch (error) {
