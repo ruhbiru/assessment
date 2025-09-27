@@ -1,0 +1,38 @@
+{
+  "name": "nestjs-app",
+  "version": "0.0.1",
+  "description": "A NestJS application",
+  "author": "Your Name",
+  "license": "MIT",
+  "scripts": {
+    "build:api": "nest build -c api-cli.json",
+    "start:api:dev": "nest start -c api-cli.json --watch",
+    "start:api": "npm run build:api && node dist/api.main.js",
+    "build:flash-sale-events-handlers": "nest build -c flash-sale-events-cli.json",
+    "start:flash-sale-events-handlers:dev": "nest start -c flash-sale-events-cli.json --watch",
+    "start:flash-sale-events-handlers": "npm run build:flash-sale-events-handlers && node dist/flash-sale-events.main.js"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/event-emitter": "^3.0.1",
+    "@nestjs/microservices": "^11.1.6",
+    "@nestjs/platform-express": "^11.1.6",
+    "@nestjs/serve-static": "^5.0.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "ioredis": "^5.7.0",
+    "kafkajs": "^2.2.4",
+    "lodash": "^4.17.21",
+    "moment": "^2.30.1",
+    "rxjs": "^7.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.10",
+    "@nestjs/schematics": "^9.0.0",
+    "@types/express": "^5.0.3",
+    "@types/lodash": "^4.17.20",
+    "typescript": "^4.5.0"
+  }
+}

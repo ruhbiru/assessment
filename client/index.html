@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      src="https://unpkg.com/react@18/umd/react.development.js"
+      crossorigin
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"
+      crossorigin
+    ></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="useSSE.js" type="text/babel"></script>
+    <script src="usePolling.js" type="text/babel"></script>
+    <script src="api.js" type="text/babel"></script>
+  </head>
+  <body class="bg-gray-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      function OrderPage() {
+        const productId = "d88a7af7-55a7-4fd4-985e-431a9afc76c2";
+        const [formData, setFormData] = useState({
+          productId,
+          customerId: "",
+          qty: 1,
+        });
+
+        const [orderId, setOrderId] = useState(null);
+        const [status, setStatus] = useState(null);
+        const [message, setMessage] = useState(null);
+        const [loading, setLoading] = useState(false);
+        const [pollingEnabled, setPollingEnabled] = useState(false);
+
+        useSSE(
+          orderId,
+          (status, msg) => {
+            if (status === "PENDING") {
+              setStatus("PENDING");
+            } else {
+              setStatus(status);
+              setMessage(msg ? [msg] : []);
+              setLoading(false);
+            }
+          },
+          () => setPollingEnabled(true) // fallback to polling
+        );
+
+        usePolling(
+          orderId,
+          (status, msg) => {
+            setStatus(status);
+            setMessage(msg ? [msg] : []);
+            setLoading(false);
+          },
+          () => {
+            setStatus("ERROR");
+            setLoading(false);
+          },
+          pollingEnabled
+        );
+
+        const handleChange = (e) => {
+          const { name, value } = e.target;
+          setFormData((prev) => ({ ...prev, [name]: value }));
+        };
+
+        const handleSubmit = async (e) => {
+          e.preventDefault();
+          setLoading(true);
+          setStatus("PENDING");
+
+          try {
+            const data = await createOrder(formData);
+
+            if (data.statusCode >= 400) {
+              const status = data.statusCode < 500 ? "WARNING" : "ERROR";
+              setStatus(data.error || status);
+              setLoading(false);
+            }
+
+            if (data.data?.id) {
+              setOrderId(data.data.id);
+            }
+
+            setMessage(data.message || null);
+          } catch (err) {
+            console.error("Failed to submit order:", err);
+            setStatus("ERROR");
+            setLoading(false);
+          }
+        };
+
+        return (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="bg-white p-6 rounded-2xl shadow-md w-96">
+              <h1 className="text-xl font-bold mb-4">Submit Order</h1>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <h3>Product: {productId}</h3>
+                <input
+                  type="text"
+                  name="customerId"
+                  placeholder="username/email"
+                  value={formData.customerId}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded-lg"
+                  required
+                />
+                <input
+                  type="number"
+                  name="qty"
+                  placeholder="Quantity"
+                  value={formData.qty}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded-lg"
+                  min="1"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
+                  disabled={loading}
+                >
+                  {loading ? "Submitting..." : "Buy Now"}
+                </button>
+              </form>
+
+              {status && (
+                <div className="mt-4 text-center">
+                  Status:{" "}
+                  <span
+                    className={
+                      status === "SUCCESS"
+                        ? "text-green-600"
+                        : status === "FAILED"
+                        ? "text-red-600"
+                        : "text-yellow-600"
+                    }
+                  >
+                    {status}
+                  </span>
+                </div>
+              )}
+              {!!message?.length && (
+                <div className="mt-4 text-center">
+                  {message.map((msg, idx) => (
+                    <div key={idx}>
+                      <span className="text-yellow-600">{msg}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(
+        <OrderPage />
+      );
+    </script>
+  </body>
+</html>
